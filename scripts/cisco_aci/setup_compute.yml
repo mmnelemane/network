@@ -1,0 +1,26 @@
+---
+- hosts: compute-kvm
+  remote_user: root
+  tasks:
+  - name: Stop chef client
+    service: name=chef-client state=stopped
+  - name: clone system with yast
+    command: yast2 clone_system
+  - fetch: 
+      src: /root/autoinst.xml
+      dest: xml/autoinst-{{ inventory_hostname }}.xml
+      flat: yes
+  - name: Execute update_xml script
+    script: update_xml.py
+  - name: Copy back updated xml files to the nodes
+    copy:
+      src: /root/out_autoinst.xml
+      dest: /root/installedSystem.xml
+      remote_src: yes
+  - name: Apply updated AutoYaST setup
+    command: yast2 ayast_setup setup filename=/root/installedSystem.xml
+  - name: resume chef client
+    service: name=chef-client state=started
+
+            
+               
